@@ -8,34 +8,25 @@
 
 
 void error(char *masg){
-    perror(msg);
+    perror(masg);
     exit(1);
 }
 
-int sameTamplate(char msg){
-    char* right_tamplete = "Hello! My name is ";
-    int len_tam = sizeof( right_tamplete);
-    int len_msg = sizeof(msg);
+int rigth_tamplate(char* msg) {
 
-    for(int i = 0; i < len_tam-1 ;i++)
-        if(right_tamplete[i] != msg[i])
-            return 0;
+    if( strncmp("Hello! My name is ",msg,18) == 0 )
+        if(msg[ strlen(msg)-1] == '.')
+            return 1;
     
-    if(msg[ len-1 ] != '.')
-        return 0;
-    
-    return 1;
-    
+    return 0;
 }
-
-
 
 int main(int argc,char *argv[]) {
     int sockfd, newsockfd;
     int portno, clilen, servlen;
     char buffer[256];
     struct sockaddr_in serv_addr,cli_addr;
-    pit_t pid;
+    pid_t pid;
 
     if(argc < 2)
         error("ERROR opening socket");
@@ -49,12 +40,12 @@ int main(int argc,char *argv[]) {
     servlen = sizeof(serv_addr);
 
     bzero( (char*) &serv_addr, servlen);
-    portno = atoi( argc[1] );
+    portno = atoi( argv[1] );
     serv_addr.sin_port = htons(portno);
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
 
-    if( bind(sockfd, (struct sockaddr *) &serv_addr, socklen_t servlen) < 0)
+    if( bind(sockfd, (struct sockaddr *) &serv_addr, (socklen_t) servlen) < 0)
         error("Errore nel binding");
 
     listen(sockfd,400);
@@ -70,15 +61,35 @@ int main(int argc,char *argv[]) {
         pid = fork();
 
         if(pid == 0){
-
+        
             close(sockfd);
+
+            char nome_client[200];
+
+            while(1){
+                bzero( (char *) &buffer,256);
+                bzero( (char *) &nome_client,200);
+
+                if( read(newsockfd,buffer,256) < 0)
+                    error("Errore nella lettura");
+
+                if( rigth_tamplate(buffer) == 1 ){
+                    char risposta[256];
+                    strcpy(nome_client, &buffer[18]);
+                    nome_client[strcspn(nome_client, ".")] = '\0';
+
+                    sprintf(risposta,"Hello %s! My name is %s.", nome_client, argv[0]);
+                    strcpy(buffer, risposta);
+                }else{
+                    char* risposta = "Wrong Message";
+                    strcpy(buffer,risposta);
+                }
+                
+                if( write(newsockfd,buffer,256) < 0)
+                    error("errore scrittura");
             
-            bzero( (char *) &buffer,256);
-
-            if( sameTamplate(buffer) == 1 )
-                char* risposta = "Hello";
-
-
+            }
+            
             return 0;
         }
 
