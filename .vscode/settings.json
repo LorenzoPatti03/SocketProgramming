@@ -5,7 +5,9 @@
         "socket.h": "c",
         "stdio.h": "c",
         "stdlib.h": "c",
-        "unistd.h": "c"
+        "unistd.h": "c",
+        "types.h": "c",
+        "netdb.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
